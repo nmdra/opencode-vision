@@ -59,6 +59,10 @@ Nothing to do — the model calls `vision` automatically when you attach an imag
 - One retry per call, stderr captured in error messages, temp files cleaned up
 - Linux-only (screenshot search dirs)
 
+## Credits
+
+This plugin is derived from [alfaoz/opencode-see-image](https://github.com/alfaoz/opencode-see-image) (MIT) by [@alfaoz](https://github.com/alfaoz) — the original project that gives non-vision opencode models the ability to see images. This project keeps the same image-resolution ladder and vision-routing concept while simplifying it to a single-file, Linux-only, free-model plugin. Thanks for the inspiration and the solid base.
+
 ## License
 
 MIT. Derived from [alfaoz/opencode-see-image](https://github.com/alfaoz/opencode-see-image) (MIT).
