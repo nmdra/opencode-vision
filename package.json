@@ -1,0 +1,13 @@
+{
+  "name": "opencode-vision",
+  "version": "1.0.0",
+  "description": "Give non-vision opencode models the ability to see images by routing them to a vision-capable model.",
+  "type": "module",
+  "main": "vision.js",
+  "files": ["vision.js"],
+  "keywords": ["opencode", "plugin", "vision", "image", "screenshot"],
+  "license": "MIT",
+  "peerDependencies": {
+    "@opencode-ai/plugin": "*"
+  }
+}
