@@ -55,9 +55,12 @@ Nothing to do — the model calls `vision` automatically when you attach an imag
 
 - Resolution ladder: session parts → SQLite DB → filesystem search, with fuzzy filename matching (NFKC-normalized, `U+202F` handled)
 - Vision-capability detection — instructions are only injected for models that lack native image input
-- Live spinner + elapsed-seconds in the TUI tool title while the vision call runs
 - One retry per call, stderr captured in error messages, temp files cleaned up
 - Linux-only (screenshot search dirs)
+
+## Known limitations
+
+The tool part title (set via `context.metadata`) is not rendered in the main TUI timeline for plugin tools — upstream opencode issue [#18585](https://github.com/anomalyco/opencode/issues/18585). The tool row still shows `⚙ vision [filePath=...]` while running and `✓` on completion.
 
 ## Credits
 

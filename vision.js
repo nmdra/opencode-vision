@@ -4,7 +4,8 @@
 //   - no SDK session.prompt / no HTTP fallback / no auto-update
 // Resolution ladder: opencode session parts (SDK) -> opencode.db (bun:sqlite)
 // -> filesystem search dirs. Linux-only.
-// Tool name: `vision` (spinner + elapsed-seconds shown in the TUI title).
+// Tool name: `vision`. The part title is set once via context.metadata; the
+// main TUI timeline does not render tool-part titles (upstream #18585).
 
 import { tool } from "@opencode-ai/plugin"
 import path from "path"
@@ -233,7 +234,7 @@ function seeImageViaCli(dataUrl, mediaType, prompt, abort) {
     const b64 = dataUrl.split(",")[1] || ""
     const ext =
       Object.entries(EXT_MEDIA).find(([, m]) => m === mediaType)?.[0] || "png"
-    const tmpPath = path.join(os.tmpdir(), `see-image-${Date.now()}.${ext}`)
+    const tmpPath = path.join(os.tmpdir(), `vision-${Date.now()}.${ext}`)
     fs.writeFileSync(tmpPath, Buffer.from(b64, "base64"))
 
     const proc = spawn(
@@ -373,14 +374,6 @@ ${spatial ? "\nSpatial layout matters here: include a labeled ASCII diagram of t
 
 // ─ plugin -------------------------------------------------------------
 
-const SPINNER = ["░", "▒", "▓", "█", "▓", "▒"]
-
-function spinnerFrame(tick, width = 8) {
-  let s = ""
-  for (let i = 0; i < width; i++) s += SPINNER[(i + tick) % SPINNER.length]
-  return s
-}
-
 const SeeImagePlugin = async (ctx) => {
   const sessionVision = new Map()
   const rememberVision = (sessionID, model) => {
@@ -429,18 +422,6 @@ const SeeImagePlugin = async (ctx) => {
         throw e
       }
 
-      const started = Date.now()
-      let tick = 0
-      const render = () => {
-        const secs = Math.round((Date.now() - started) / 1000)
-        context.metadata({
-          title: `vision ${spinnerFrame(tick++)} looking… ${secs}s`,
-          metadata: { working: true, elapsedSeconds: secs },
-        })
-      }
-      render()
-      const heartbeat = setInterval(render, 400)
-
       try {
         const prompt = buildPrompt(args.question)
         try {
@@ -460,7 +441,6 @@ const SeeImagePlugin = async (ctx) => {
           )
         }
       } finally {
-        clearInterval(heartbeat)
         context.metadata({
           title: `vision: ${args.filePath || "latest image"}`,
           metadata: { model: MODEL, source: resolved.source },
