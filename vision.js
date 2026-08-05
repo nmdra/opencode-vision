@@ -14,6 +14,8 @@ import fs from "fs"
 import { spawn } from "node:child_process"
 
 const MODEL = process.env.SEE_IMAGE_MODEL || "opencode/mimo-v2.5-free"
+const FALLBACK_MODEL =
+  process.env.SEE_IMAGE_FALLBACK_MODEL || "openrouter/xiaomi/mimo-v2.5"
 const TIMEOUT = parseInt(process.env.SEE_IMAGE_TIMEOUT || "60000", 10)
 
 const EXT_MEDIA = {
@@ -229,7 +231,7 @@ async function resolveImage(name, cwd, sessionID, client) {
 
 // ─ vision call ---------------------------------------------------------
 
-function seeImageViaCli(dataUrl, mediaType, prompt, abort) {
+function seeImageViaCli(dataUrl, mediaType, prompt, model, abort) {
   return new Promise((resolve, reject) => {
     const b64 = dataUrl.split(",")[1] || ""
     const ext =
@@ -244,7 +246,7 @@ function seeImageViaCli(dataUrl, mediaType, prompt, abort) {
         "-f",
         tmpPath,
         "-m",
-        MODEL,
+        model,
         prompt,
         "--format",
         "json",
@@ -422,28 +424,39 @@ const SeeImagePlugin = async (ctx) => {
         throw e
       }
 
+      let usedModel = MODEL
       try {
         const prompt = buildPrompt(args.question)
-        try {
-          return await seeImageViaCli(
-            resolved.dataUrl,
-            resolved.mediaType,
-            prompt,
-            context.abort,
-          )
-        } catch (e) {
-          if (context.abort?.aborted) throw e
-          return await seeImageViaCli(
-            resolved.dataUrl,
-            resolved.mediaType,
-            prompt,
-            context.abort,
-          )
+        const attempts = [
+          MODEL,
+          MODEL,
+          MODEL,
+          ...(FALLBACK_MODEL === MODEL ? [] : [FALLBACK_MODEL]),
+        ]
+        let lastError = null
+        for (const model of attempts) {
+          if (context.abort?.aborted) {
+            throw lastError || new Error("vision: aborted before completion")
+          }
+          try {
+            const text = await seeImageViaCli(
+              resolved.dataUrl,
+              resolved.mediaType,
+              prompt,
+              model,
+              context.abort,
+            )
+            usedModel = model
+            return text
+          } catch (e) {
+            lastError = e
+          }
         }
+        throw lastError
       } finally {
         context.metadata({
           title: `vision: ${args.filePath || "latest image"}`,
-          metadata: { model: MODEL, source: resolved.source },
+          metadata: { model: usedModel, source: resolved.source },
         })
       }
     },

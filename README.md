@@ -25,6 +25,10 @@ vision tool resolves the image:
 spawns `opencode run -m opencode/mimo-v2.5-free -f <image>` (CLI fallback)
         |
         v
+retries primary model up to 3 times (initial + 2 retries), then falls back
+to `openrouter/xiaomi/mimo-v2.5` (configurable)
+        |
+        v
 returns the textual description to the parent model
 ```
 
@@ -49,13 +53,14 @@ Nothing to do — the model calls `vision` automatically when you attach an imag
 | env var | default | description |
 | --- | --- | --- |
 | `SEE_IMAGE_MODEL` | `opencode/mimo-v2.5-free` | Vision model ID used for the CLI call |
+| `SEE_IMAGE_FALLBACK_MODEL` | `openrouter/xiaomi/mimo-v2.5` | Vision model used after the primary model fails 3 attempts (initial + 2 retries) |
 | `SEE_IMAGE_TIMEOUT` | `60000` | Timeout in ms per CLI call |
 
 ## Features
 
 - Resolution ladder: session parts → SQLite DB → filesystem search, with fuzzy filename matching (NFKC-normalized, `U+202F` handled)
 - Vision-capability detection — instructions are only injected for models that lack native image input
-- One retry per call, stderr captured in error messages, temp files cleaned up
+- Retry with fallback: primary model is attempted up to 3 times (initial + 2 retries), then it falls back to `SEE_IMAGE_FALLBACK_MODEL`; stderr captured in error messages, temp files cleaned up
 - Linux-only (screenshot search dirs)
 
 ## Known limitations
